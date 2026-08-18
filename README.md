@@ -5,8 +5,17 @@ it over REST and gRPC, authenticates its callers, keeps each tenant's data
 apart, and talks to its peers without hardcoding a single URL.
 
 ```bash
+# This repository is private, so the public module proxy cannot fetch it.
+# Tell Go to go straight to git, and give git a credential for github.com.
+go env -w GOPRIVATE=github.com/neokarl/*
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+
 go get github.com/neokarl/sdk-go
 ```
+
+Without `GOPRIVATE` the failure is a 404 from `proxy.golang.org` naming the
+module, which looks like a typo in the import path rather than the access
+problem it is.
 
 Requires Go 1.25.4 or later.
 
