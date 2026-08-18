@@ -22,8 +22,11 @@ import (
 // say so in Go, where the message can explain itself.
 type Plugin struct{}
 
+// Name identifies the plugin to GORM.
 func (Plugin) Name() string { return "platform:tenancy" }
 
+// Initialize registers the create callback. GORM calls it from db.Use;
+// [Setup] is the normal way to install this plugin.
 func (Plugin) Initialize(db *gorm.DB) error {
 	return db.Callback().Create().Before("gorm:create").Register("tenancy:fill", fill)
 }
@@ -38,7 +41,7 @@ func fill(db *gorm.DB) {
 	}
 
 	ctx := db.Statement.Context
-	tenant, ok := From(ctx)
+	tenant, ok := TenantFrom(ctx)
 	if !ok {
 		db.AddError(ErrNoTenant)
 		return

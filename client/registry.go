@@ -1,25 +1,15 @@
-// Package serviceregistry is the cross-service service-name abstraction.
-// Services that need to call another service's HTTP API don't hardcode
-// URL paths — they reference operations by `(serviceId, operationId)`
-// (e.g. "assets" + "asset.get") and let the registry resolve the URL +
-// method from the platform's service manifest catalog. That way an API
-// owner can rename a path or move a service without breaking peers.
+// registry.go — resolving an operation on another service to a concrete HTTP
+// call, so a caller never hardcodes a peer's URL paths.
 //
-// The registry boots a snapshot from the platform on first use,
-// caches it, and refreshes in the background. A request issued
-// before the first snapshot lands blocks on the initial fetch
-// instead of failing — keeps boot order forgiving.
+// Services reference operations by (serviceID, opID) — say "inventory" and
+// "item.get" — and the registry resolves the URL and method from the platform's
+// service manifest catalog. An API owner can then rename a path, or move a
+// service to a different host, without breaking its callers.
 //
-// Usage sketch:
-//
-//	reg := serviceregistry.New("http://platform:8080", &http.Client{})
-//	var asset Asset
-//	err := reg.Invoke(ctx, serviceregistry.Call{
-//	    Service: "assets",
-//	    Op:     "asset.get",
-//	    Path:   map[string]string{"id": id},
-//	    Out:    &asset,
-//	})
+// The registry fetches a catalog snapshot at startup, caches it, and refreshes
+// in the background. A request issued before the first snapshot lands blocks on
+// that initial fetch rather than failing, which keeps boot ordering forgiving.
+
 package client
 
 import (
@@ -35,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"platform/sdk/contracts"
+	"go.neokarl.com/sdk/contracts"
 )
 
 // Registry resolves (serviceId, opId) into HTTP calls. Safe for
@@ -56,11 +46,15 @@ type Registry struct {
 	// just because the registry hasn't initialised yet.
 	readyOnce sync.Once
 	ready     chan struct{}
+
+	// stop cancels the background refresh loop. Closed by Close.
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 // Call describes one operation invocation.
 type Call struct {
-	// Service is the target service's id (e.g. "assets").
+	// Service is the target service's id (e.g. "inventory").
 	Service string
 	// Op is the operation id within that service (e.g. "asset.get").
 	Op string
@@ -96,10 +90,13 @@ func WithHTTPClient(c *http.Client) Option {
 	return func(r *Registry) { r.httpClient = c }
 }
 
-// New builds a Registry rooted at `platformBaseURL` (e.g.
-// "http://platform-api:8080"). The first catalog fetch is kicked off
-// in a goroutine; callers that need synchronous boot can call
-// `WaitReady`.
+// NewRegistry builds a Registry rooted at the platform's base URL. The first
+// catalog fetch starts immediately in the background; callers that want to fail
+// fast at boot rather than block on the first call can use
+// [Registry.WaitReady].
+//
+// Call [Registry.Close] when done — the registry runs a refresh goroutine for
+// its lifetime.
 func NewRegistry(platformBaseURL string, opts ...Option) *Registry {
 	r := &Registry{
 		platformBaseURL: strings.TrimRight(platformBaseURL, "/"),
@@ -107,12 +104,21 @@ func NewRegistry(platformBaseURL string, opts ...Option) *Registry {
 		refreshEvery:    60 * time.Second,
 		catalog:         map[string]contracts.ServiceManifest{},
 		ready:           make(chan struct{}),
+		stop:            make(chan struct{}),
 	}
 	for _, opt := range opts {
 		opt(r)
 	}
 	go r.runRefresh()
 	return r
+}
+
+// Close stops the background catalog refresh. The registry stays usable
+// afterwards, serving from the last snapshot it holds; it just stops updating.
+// Safe to call more than once.
+func (r *Registry) Close() error {
+	r.stopOnce.Do(func() { close(r.stop) })
+	return nil
 }
 
 // WaitReady blocks until the first catalog fetch completes (or the
@@ -149,14 +155,14 @@ func (r *Registry) Catalog() map[string]contracts.ServiceManifest {
 
 // GRPCAddress resolves a service id to the gRPC address it advertises in its
 // manifest, blocking on the first catalog load so peers booted in parallel
-// don't see a spurious "not in catalog". Satisfies servicekit.Resolver.
+// don't see a spurious "not in catalog". Satisfies [Resolver].
 func (r *Registry) GRPCAddress(serviceID string) (string, error) {
 	<-r.ready
 	r.mu.RLock()
 	m, ok := r.catalog[serviceID]
 	r.mu.RUnlock()
 	if !ok {
-		return "", fmt.Errorf("serviceregistry: service %q not in catalog", serviceID)
+		return "", fmt.Errorf("client: service %q not in catalog", serviceID)
 	}
 	return m.GRPCAddress, nil
 }
@@ -170,10 +176,10 @@ func (r *Registry) BaseURL(serviceID string) (string, error) {
 	m, ok := r.catalog[serviceID]
 	r.mu.RUnlock()
 	if !ok {
-		return "", fmt.Errorf("serviceregistry: service %q not in catalog", serviceID)
+		return "", fmt.Errorf("client: service %q not in catalog", serviceID)
 	}
 	if m.APIBaseURL == "" {
-		return "", fmt.Errorf("serviceregistry: service %q advertises no APIBaseURL", serviceID)
+		return "", fmt.Errorf("client: service %q advertises no APIBaseURL", serviceID)
 	}
 	return m.APIBaseURL, nil
 }
@@ -199,14 +205,14 @@ func (r *Registry) Invoke(ctx context.Context, call Call) error {
 	if call.Body != nil {
 		raw, jerr := json.Marshal(call.Body)
 		if jerr != nil {
-			return fmt.Errorf("serviceregistry: marshal body: %w", jerr)
+			return fmt.Errorf("client: marshal body: %w", jerr)
 		}
 		body = bytes.NewReader(raw)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, fullURL, body)
 	if err != nil {
-		return fmt.Errorf("serviceregistry: build request: %w", err)
+		return fmt.Errorf("client: build request: %w", err)
 	}
 	if call.Body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -225,7 +231,7 @@ func (r *Registry) Invoke(ctx context.Context, call Call) error {
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("serviceregistry: %s %s: %w", method, fullURL, err)
+		return fmt.Errorf("client: %s %s: %w", method, fullURL, err)
 	}
 	defer resp.Body.Close()
 
@@ -250,13 +256,13 @@ func (r *Registry) Invoke(ctx context.Context, call Call) error {
 	if pb, ok := call.Out.(*[]byte); ok {
 		raw, rerr := io.ReadAll(resp.Body)
 		if rerr != nil {
-			return fmt.Errorf("serviceregistry: read body: %w", rerr)
+			return fmt.Errorf("client: read body: %w", rerr)
 		}
 		*pb = raw
 		return nil
 	}
 	if err := json.NewDecoder(resp.Body).Decode(call.Out); err != nil {
-		return fmt.Errorf("serviceregistry: decode response: %w", err)
+		return fmt.Errorf("client: decode response: %w", err)
 	}
 	return nil
 }
@@ -270,10 +276,10 @@ func (r *Registry) Resolve(call Call) (string, string, error) {
 	manifest, ok := r.catalog[call.Service]
 	r.mu.RUnlock()
 	if !ok {
-		return "", "", fmt.Errorf("serviceregistry: service %q not in catalog", call.Service)
+		return "", "", fmt.Errorf("client: service %q not in catalog", call.Service)
 	}
 	if manifest.APIBaseURL == "" {
-		return "", "", fmt.Errorf("serviceregistry: service %q has no apiBaseUrl", call.Service)
+		return "", "", fmt.Errorf("client: service %q has no apiBaseUrl", call.Service)
 	}
 	var op *contracts.APISpec
 	for i := range manifest.APIs {
@@ -283,12 +289,12 @@ func (r *Registry) Resolve(call Call) (string, string, error) {
 		}
 	}
 	if op == nil {
-		return "", "", fmt.Errorf("serviceregistry: service %q has no operation %q", call.Service, call.Op)
+		return "", "", fmt.Errorf("client: service %q has no operation %q", call.Service, call.Op)
 	}
 
 	path, err := substitutePath(op.Path, call.Path)
 	if err != nil {
-		return "", "", fmt.Errorf("serviceregistry: %s.%s: %w", call.Service, call.Op, err)
+		return "", "", fmt.Errorf("client: %s.%s: %w", call.Service, call.Op, err)
 	}
 
 	fullURL := strings.TrimRight(manifest.APIBaseURL, "/") + path
@@ -309,7 +315,7 @@ func (r *Registry) Resolve(call Call) (string, string, error) {
 
 // substitutePath replaces `{name}` segments in `template` with values
 // from `params`. A missing key returns an error rather than leaving
-// the literal placeholder — silently producing `/api/v1/assets/{id}`
+// the literal placeholder — silently producing `/api/v1/items/{id}`
 // would be a confusing 404.
 func substitutePath(template string, params map[string]string) (string, error) {
 	if !strings.Contains(template, "{") {
@@ -345,8 +351,13 @@ func (r *Registry) runRefresh() {
 
 	ticker := time.NewTicker(r.refreshEvery)
 	defer ticker.Stop()
-	for range ticker.C {
-		r.refresh()
+	for {
+		select {
+		case <-ticker.C:
+			r.refresh()
+		case <-r.stop:
+			return
+		}
 	}
 }
 

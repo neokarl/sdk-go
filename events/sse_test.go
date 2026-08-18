@@ -78,7 +78,7 @@ func TestSSEInitialCanBeFinal(t *testing.T) {
 	}
 }
 
-// Proxies drop connections that go quiet, and a scan can legitimately produce
+// Proxies drop connections that go quiet, and a long import can legitimately produce
 // nothing for minutes — this is the fix neither plugin had.
 func TestSSEKeepAlive(t *testing.T) {
 	ch := make(chan tick)

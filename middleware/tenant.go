@@ -17,7 +17,7 @@ const HeaderTenantID = "X-Tenant-ID"
 // for correlation and for development convenience.
 //
 // The enforceable tenant comes from the verified token: auth.Verifier.TenantOf,
-// with platform/sdk/tenancy pushing it into the database so a forgotten filter
+// with go.neokarl.com/sdk/tenancy pushing it into the database so a forgotten filter
 // cannot leak. Two things named "tenant" is a trap, which is why this says so.
 func Tenant(defaultTenant string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

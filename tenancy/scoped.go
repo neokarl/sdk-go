@@ -18,7 +18,7 @@ import (
 // doesn't will see nothing rather than everything, which is the failure mode we
 // chose: quiet and safe, rather than loud or leaky.
 func Scoped(ctx context.Context, db *gorm.DB, fn func(tx *gorm.DB) error) error {
-	tenant, ok := From(ctx)
+	tenant, ok := TenantFrom(ctx)
 	if !ok {
 		return ErrNoTenant
 	}

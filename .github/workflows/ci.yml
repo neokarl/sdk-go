@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sdk
+          POSTGRES_PASSWORD: sdk
+          POSTGRES_DB: sdk
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sdk"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: build
+        run: go build ./...
+
+      # The integration tests are the point of the service containers above. If
+      # these credentials are wrong the tests silently skip, so assert coverage
+      # rather than trusting a green run.
+      - name: test
+        env:
+          TEST_POSTGRES_DSN: postgres://sdk:sdk@localhost:5432/sdk?sslmode=disable
+          TEST_REDIS_ADDR: localhost:6379
+        run: go test -race -count=1 ./...
+
+      - name: examples compile
+        run: go build ./examples/...
+
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          [ -z "$out" ] || { echo "not gofmt'd:"; echo "$out"; exit 1; }
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest

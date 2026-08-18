@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"platform/sdk/contracts"
-	"platform/sdk/errors"
-	"platform/sdk/logger"
+	"go.neokarl.com/sdk/contracts"
+	"go.neokarl.com/sdk/errors"
+	"go.neokarl.com/sdk/observability"
 )
 
 // Recover catches panics, logs them with a stack trace, and returns the
@@ -21,7 +21,7 @@ func Recover() echo.MiddlewareFunc {
 			defer func() {
 				if r := recover(); r != nil {
 					ctx := c.Request().Context()
-					logger.From(ctx).LogAttrs(ctx, slog.LevelError, "panic",
+					observability.LoggerFrom(ctx).LogAttrs(ctx, slog.LevelError, "panic",
 						slog.Any("recover", r),
 						slog.String("stack", string(debug.Stack())),
 					)

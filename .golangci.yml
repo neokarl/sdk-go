@@ -1,0 +1,42 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - gosec
+    - misspell
+    - nilerr
+    - revive
+    - unconvert
+    - wastedassign
+
+  settings:
+    revive:
+      rules:
+        # A public SDK: every exported symbol carries documentation.
+        - name: exported
+          arguments: [checkPrivateReceivers, disableStutteringCheck]
+        - name: package-comments
+    gosec:
+      excludes:
+        # G115 (integer overflow on conversion) is too noisy against the
+        # protobuf and OTel APIs to be useful here.
+        - G115
+
+  exclusions:
+    rules:
+      # Test fixtures may hardcode credentials and skip error checks.
+      - path: _test\.go
+        linters: [gosec, errcheck]
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

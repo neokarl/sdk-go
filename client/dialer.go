@@ -7,13 +7,29 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"platform/sdk/transport"
+	"go.neokarl.com/sdk/internal/mtls"
+	"go.neokarl.com/sdk/transport"
 )
 
-// Resolver maps a service id to the gRPC address it serves on. The platform's
-// serviceregistry.Registry satisfies this (resolving from the manifest catalog).
+// MTLS builds mutual-TLS credentials for dialling peer services: this client
+// presents cert/key, and verifies the server's certificate against caFile.
+// serverName, when non-empty, overrides the hostname checked against the
+// server certificate's SANs.
+//
+//	creds, err := client.MTLS("certs/ca.crt", "certs/client.crt", "certs/client.key", "")
+//	if err != nil {
+//	    return err
+//	}
+//	c, err := client.New(ctx, platformURL, client.WithMTLS(creds))
+func MTLS(caFile, certFile, keyFile, serverName string) (credentials.TransportCredentials, error) {
+	return mtls.ClientCreds(caFile, certFile, keyFile, serverName)
+}
+
+// Resolver maps a service id to the gRPC address it serves on. [Registry]
+// satisfies this, resolving from the platform's manifest catalog.
 type Resolver interface {
 	GRPCAddress(serviceID string) (string, error)
 }
@@ -35,14 +51,20 @@ type Dialer struct {
 	conns map[string]*grpc.ClientConn
 }
 
-// NewDialer builds a dialer over a resolver. extra dial options are appended to
-// the platform defaults (insecure transport + identity-propagating interceptors).
-func NewDialer(resolver Resolver, log *slog.Logger, extra ...grpc.DialOption) *Dialer {
+// NewDialer builds a dialer over a resolver.
+//
+// The transport is plaintext unless creds are supplied — pass the credentials
+// built by [WithMTLS] to authenticate both ends. extra dial options are
+// appended last, so they win over the platform defaults.
+func NewDialer(resolver Resolver, log *slog.Logger, creds credentials.TransportCredentials, extra ...grpc.DialOption) *Dialer {
 	if log == nil {
 		log = slog.Default()
 	}
+	if creds == nil {
+		creds = insecure.NewCredentials()
+	}
 	opts := append([]grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		// Retries live below the interceptors (in the transport), so a call that
 		// succeeds on retry never reaches the breaker as a failure; the breaker

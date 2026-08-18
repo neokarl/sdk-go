@@ -2,12 +2,18 @@ package contracts
 
 import "time"
 
-// ServiceType matches BACKEND.md service taxonomy.
+// ServiceType is what a service contributes to the platform.
 type ServiceType string
 
 const (
-	ServiceTypeUI     ServiceType = "ui"
-	ServiceTypeAPI    ServiceType = "api"
+	// ServiceTypeUI contributes only frontend: a federated module the shell
+	// mounts. It declares an Entry and no APIs.
+	ServiceTypeUI ServiceType = "ui"
+	// ServiceTypeAPI contributes only a backend: REST operations and/or gRPC
+	// services, with no user interface of its own.
+	ServiceTypeAPI ServiceType = "api"
+	// ServiceTypeHybrid contributes both, which is the common shape for a
+	// feature that owns its screens and its data.
 	ServiceTypeHybrid ServiceType = "hybrid"
 )
 
@@ -42,7 +48,7 @@ type APISpec struct {
 	// Method is the HTTP verb (uppercase: GET/POST/PATCH/PUT/DELETE).
 	Method string `json:"method"`
 	// Path is the URL template relative to the service's apiBaseUrl,
-	// e.g. "/api/v1/assets/{id}".
+	// e.g. "/api/v1/items/{id}".
 	Path string `json:"path"`
 	// Summary / Description power the Swagger-style admin viewer.
 	Summary     string `json:"summary,omitempty"`
@@ -57,11 +63,19 @@ type APISpec struct {
 // shape to the frontend's ServiceManifest type — backend is the source of
 // truth, the frontend reads it.
 type ServiceManifest struct {
-	ID              string      `json:"id" jsonschema:"required"`
-	Name            string      `json:"name" jsonschema:"required"`
-	Version         string      `json:"version" jsonschema:"required"`
-	Type            ServiceType `json:"type,omitempty"`
-	PlatformVersion string      `json:"platformVersion" jsonschema:"required"`
+	// ID is the stable, unique identifier other services and the frontend use
+	// to address this one, e.g. "inventory". Changing it is a breaking change.
+	ID string `json:"id" jsonschema:"required"`
+	// Name is the human-readable label shown in the platform UI.
+	Name string `json:"name" jsonschema:"required"`
+	// Version is this service's own semantic version.
+	Version string `json:"version" jsonschema:"required"`
+	// Type is what the service contributes — UI, API, or both.
+	Type ServiceType `json:"type,omitempty"`
+	// PlatformVersion is the platform contract this service targets, as a
+	// caret range such as "^0.1.0". The platform refuses to enable a service
+	// whose range it does not satisfy.
+	PlatformVersion string `json:"platformVersion" jsonschema:"required"`
 	// Entry is conditionally required (ui/hybrid services only), so it is not
 	// marked required here — the rule manifest.entry.conditional enforces it.
 	Entry       string      `json:"entry"`
@@ -71,7 +85,7 @@ type ServiceManifest struct {
 	Navigation  []NavItem   `json:"navigation,omitempty"`
 	Routes      []RouteSpec `json:"routes,omitempty"`
 	// APIBaseURL is the absolute root URL the service's backend serves
-	// from (e.g. "http://engagements:8080"). APIs[].Path is appended to
+	// from (e.g. "http://inventory:8080"). APIs[].Path is appended to
 	// it at invocation time. Empty for pure-UI services that don't run
 	// a backend.
 	APIBaseURL string `json:"apiBaseUrl,omitempty"`
@@ -80,8 +94,8 @@ type ServiceManifest struct {
 	// callers never need to know URL paths.
 	APIs []APISpec `json:"apis,omitempty"`
 	// GRPCAddress is the host:port the service's gRPC server listens on for
-	// service-to-service calls (e.g. "engagements:9090"). Empty for services
-	// that expose no gRPC surface. The servicekit dialer resolves a service id
+	// service-to-service calls (e.g. "inventory:9090"). Empty for services
+	// that expose no gRPC surface. The client package's dialer resolves a service id
 	// to this address from the manifest catalog. gRPC is backend-only — the
 	// browser still calls the HTTP APIs above.
 	GRPCAddress string `json:"grpcAddress,omitempty"`
@@ -98,7 +112,7 @@ type ServiceManifest struct {
 
 // ServiceAuthz is a service's declared authorization model.
 type ServiceAuthz struct {
-	// Scopes are the actions this service defines, e.g. "engagement:read".
+	// Scopes are the actions this service defines, e.g. "inventory:read".
 	Scopes []string `json:"scopes,omitempty"`
 	// Roles are the default roles the service ships, each granting a subset of
 	// Scopes. Provisioned as realm roles + Authorization Services permissions.
@@ -107,8 +121,8 @@ type ServiceAuthz struct {
 
 // AuthzRole is a default role a service declares.
 type AuthzRole struct {
-	Name        string   `json:"name" jsonschema:"required"`
-	Description string   `json:"description,omitempty"`
+	Name        string `json:"name" jsonschema:"required"`
+	Description string `json:"description,omitempty"`
 	// Grants is the subset of the service's Scopes this role is permitted.
 	Grants []string `json:"grants,omitempty"`
 }
@@ -117,11 +131,17 @@ type AuthzRole struct {
 type ServiceStage string
 
 const (
+	// StageDiscovered means the platform has the manifest but has not checked
+	// it yet.
 	StageDiscovered ServiceStage = "discovered"
-	StageValidated  ServiceStage = "validated"
-	StageEnabled    ServiceStage = "enabled"
-	StageDisabled   ServiceStage = "disabled"
-	StageFailed     ServiceStage = "failed"
+	// StageValidated means the manifest satisfies the contract rules.
+	StageValidated ServiceStage = "validated"
+	// StageEnabled means the service is live: routed to, and listed to users.
+	StageEnabled ServiceStage = "enabled"
+	// StageDisabled means the service is installed but deliberately switched off.
+	StageDisabled ServiceStage = "disabled"
+	// StageFailed means validation or a health check failed; Error carries why.
+	StageFailed ServiceStage = "failed"
 )
 
 // ServiceRecord is the registry-stored view: manifest + lifecycle state.

@@ -22,14 +22,14 @@ func rptWith(t *testing.T, perms []map[string]any) string {
 func TestScopesFromRPT(t *testing.T) {
 	t.Run("flattens and dedupes across resources", func(t *testing.T) {
 		rpt := rptWith(t, []map[string]any{
-			{"rsname": "web-tools", "scopes": []string{"webtools.read", "webtools.write"}},
-			{"rsname": "platform", "scopes": []string{"platform.admin", "webtools.read"}},
+			{"rsname": "inventory", "scopes": []string{"inventory.read", "inventory.write"}},
+			{"rsname": "platform", "scopes": []string{"platform.admin", "inventory.read"}},
 		})
 		got, err := scopesFromRPT(rpt)
 		if err != nil {
 			t.Fatalf("scopesFromRPT: %v", err)
 		}
-		want := map[string]bool{"webtools.read": true, "webtools.write": true, "platform.admin": true}
+		want := map[string]bool{"inventory.read": true, "inventory.write": true, "platform.admin": true}
 		if len(got) != len(want) {
 			t.Fatalf("got %v, want %d distinct scopes", got, len(want))
 		}
@@ -63,8 +63,8 @@ func TestEntitlementCache(t *testing.T) {
 	var c entitlementCache
 	now := time.Now()
 
-	c.put("token-a", []string{"webtools.read"}, now)
-	if got, ok := c.get("token-a", now); !ok || len(got) != 1 || got[0] != "webtools.read" {
+	c.put("token-a", []string{"inventory.read"}, now)
+	if got, ok := c.get("token-a", now); !ok || len(got) != 1 || got[0] != "inventory.read" {
 		t.Fatalf("hit = %v, %v", got, ok)
 	}
 
@@ -111,7 +111,7 @@ func TestEntitlementsNeedAResourceServer(t *testing.T) {
 // handler has to distinguish.
 func TestAllowedIsFalseWithoutAnIdentity(t *testing.T) {
 	v := &Verifier{issuer: "http://localhost/realms/platform", resourceServer: "platform"}
-	ok, err := v.Allowed(context.Background(), "webtools.read")
+	ok, err := v.Allowed(context.Background(), "inventory.read")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

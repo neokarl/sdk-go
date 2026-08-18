@@ -67,14 +67,25 @@ type Config struct {
 	// Entitlements/Allowed; without it the Verifier authenticates only.
 	ResourceServer string
 	// TenantResolver resolves a subject's tenant when the token carries no
-	// `tenant` claim — typically a lookup against the platform user service,
-	// which this package cannot import (see docs/FRAMEWORK.md). Without it,
-	// TenantOf fails rather than guessing.
+	// `tenant` claim — typically a lookup against the platform's user service,
+	// which this package deliberately does not depend on. Without it, TenantOf
+	// fails rather than guessing.
 	TenantResolver func(ctx context.Context, subject string) (string, error)
-	// Audience, when set, must appear in the token `aud`. Empty skips the
-	// audience check (signature, issuer, and expiry are still enforced) —
-	// convenient for Keycloak access tokens whose audience is coarse in dev.
+	// Audience must appear in the token's `aud` claim. Required unless
+	// SkipAudienceCheck is set.
+	//
+	// Without an audience check, a token minted for a *different* service by the
+	// same issuer verifies here — its signature, issuer and expiry are all
+	// genuine. That is the whole point of the claim.
 	Audience string
+	// SkipAudienceCheck accepts any audience. Signature, issuer and expiry are
+	// still enforced.
+	//
+	// This is for development against an issuer whose access tokens carry a
+	// coarse audience (Keycloak's default, without an audience mapper). It is
+	// an explicit field because it used to be what happened when you left
+	// Audience empty — a security property you could lose by omission.
+	SkipAudienceCheck bool
 }
 
 // New builds a Verifier by performing OIDC discovery against cfg.IssuerURL. It
@@ -84,14 +95,15 @@ func New(ctx context.Context, cfg Config) (*Verifier, error) {
 	if cfg.IssuerURL == "" {
 		return nil, errors.New("auth: IssuerURL is required")
 	}
+	if cfg.Audience == "" && !cfg.SkipAudienceCheck {
+		return nil, errors.New("auth: Audience is required — set it to this service's expected " +
+			"token audience, or set SkipAudienceCheck to accept any audience")
+	}
 	provider, err := oidc.NewProvider(ctx, cfg.IssuerURL)
 	if err != nil {
 		return nil, fmt.Errorf("auth: OIDC discovery %q: %w", cfg.IssuerURL, err)
 	}
-	oc := &oidc.Config{ClientID: cfg.Audience}
-	if cfg.Audience == "" {
-		oc.SkipClientIDCheck = true
-	}
+	oc := &oidc.Config{ClientID: cfg.Audience, SkipClientIDCheck: cfg.SkipAudienceCheck}
 	return &Verifier{
 		verifier:       provider.Verifier(oc),
 		issuer:         cfg.IssuerURL,
@@ -152,8 +164,12 @@ func WithIdentity(ctx context.Context, id *Identity) context.Context {
 	return context.WithValue(ctx, ctxKey{}, id)
 }
 
-// FromContext returns the verified identity bound to ctx, if any.
-func FromContext(ctx context.Context) (*Identity, bool) {
+// IdentityFrom returns the verified identity bound to ctx, if any.
+//
+// This is the caller the service is acting for, established from a verified
+// token. It is not middleware.UserIDFrom, which reads a header the caller
+// supplies and so must never be used for a decision.
+func IdentityFrom(ctx context.Context) (*Identity, bool) {
 	id, ok := ctx.Value(ctxKey{}).(*Identity)
 	return id, ok
 }

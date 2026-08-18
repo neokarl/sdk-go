@@ -8,16 +8,21 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"go.neokarl.com/sdk/tenancy"
 )
 
 // ErrNoTenant means the caller's tenant could not be established. Treat it as a
 // refusal, never as "no scoping": a tenant that cannot be resolved must not fall
 // back to a default, or the boundary is decoration.
-var ErrNoTenant = errors.New("auth: no tenant for the caller")
+//
+// It is the same sentinel as [tenancy.ErrNoTenant] — one tenant boundary, one
+// error to test for, whether it is the caller's tenant that could not be
+// established or a query that was never scoped.
+var ErrNoTenant = tenancy.ErrNoTenant
 
 // tenantTTL bounds how long a resolved tenant is reused. Longer than the
 // entitlement cache because tenant membership changes far less often than a role.
@@ -61,7 +66,7 @@ func (c *tenantCache) put(subject, tenant string, now time.Time) {
 // It never guesses. A caller with no verified identity, or a subject whose tenant
 // cannot be resolved, yields ErrNoTenant.
 func (v *Verifier) TenantOf(ctx context.Context) (string, error) {
-	id, ok := FromContext(ctx)
+	id, ok := IdentityFrom(ctx)
 	if !ok {
 		return "", ErrNoTenant
 	}

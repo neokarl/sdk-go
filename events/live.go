@@ -20,7 +20,7 @@ var ErrNoRedis = errors.New("events: live streams need a Redis address")
 
 // Live fans an event out to every current subscriber of a key.
 //
-// Use it for the live tail of something in progress — a scan's counter ticking
+// Use it for the live tail of something in progress — an import's counter ticking
 // up, tokens streaming into a chat — where the reader wants what is happening
 // *now* and old events are worthless. Use Bus instead for anything another
 // service must not miss.
@@ -53,7 +53,7 @@ type LiveConfig struct {
 	// RedisAddr is required.
 	RedisAddr string
 	// Prefix namespaces the channels, since the platform's Redis is shared by
-	// every service. Required: e.g. "webtools:scan".
+	// every service. Required: e.g. "inventory:import".
 	Prefix string
 	// Buffer is the per-subscriber queue depth. Default 32.
 	Buffer int

@@ -189,7 +189,7 @@ func TestCreateWithoutATenantIsRefused(t *testing.T) {
 func TestCreateInsideScopedFillsTheTenant(t *testing.T) {
 	db, cleanup := openGormDB(t)
 	defer cleanup()
-	ctx := With(context.Background(), "acme")
+	ctx := WithTenant(context.Background(), "acme")
 	if err := Migrate(context.Background(), db, &scopedRow{}); err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestReadsSeeOnlyTheScopedTenant(t *testing.T) {
 	}
 
 	for _, tenant := range []string{"acme", "globex"} {
-		ctx := With(context.Background(), tenant)
+		ctx := WithTenant(context.Background(), tenant)
 		if err := Scoped(ctx, db, func(tx *gorm.DB) error {
 			return tx.Create(&scopedRow{ID: tenant + "-1", Note: "row"}).Error
 		}); err != nil {
@@ -233,7 +233,7 @@ func TestReadsSeeOnlyTheScopedTenant(t *testing.T) {
 	count := func(tenant string) int64 {
 		t.Helper()
 		var n int64
-		ctx := With(context.Background(), tenant)
+		ctx := WithTenant(context.Background(), tenant)
 		if err := Scoped(ctx, db, func(tx *gorm.DB) error {
 			// Deliberately no WHERE — this is the forgotten filter the policy is for.
 			return tx.Table(scopedTable).Count(&n).Error
@@ -269,7 +269,7 @@ func TestAcrossTenantsSeesEveryTenant(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tenant := range []string{"acme", "globex"} {
-		if err := Scoped(With(ctx, tenant), db, func(tx *gorm.DB) error {
+		if err := Scoped(WithTenant(ctx, tenant), db, func(tx *gorm.DB) error {
 			return tx.Create(&scopedRow{ID: tenant, Note: "row"}).Error
 		}); err != nil {
 			t.Fatal(err)
@@ -288,7 +288,7 @@ func TestAcrossTenantsSeesEveryTenant(t *testing.T) {
 
 	// A tenant that happens to be named "*" must not get the same power by
 	// accident — the escape is the function, not a value a caller can supply.
-	if err := Scoped(With(ctx, "acme"), db, func(tx *gorm.DB) error {
+	if err := Scoped(WithTenant(ctx, "acme"), db, func(tx *gorm.DB) error {
 		return tx.Table(scopedTable).Count(&n).Error
 	}); err != nil {
 		t.Fatal(err)
@@ -323,7 +323,7 @@ func TestBackfillAdoptsATableThatAlreadyHasRows(t *testing.T) {
 
 	// The pre-existing rows are now the default tenant's, and visible to it.
 	var n int64
-	if err := Scoped(With(ctx, "default"), db, func(tx *gorm.DB) error {
+	if err := Scoped(WithTenant(ctx, "default"), db, func(tx *gorm.DB) error {
 		return tx.Table(scopedTable).Count(&n).Error
 	}); err != nil {
 		t.Fatal(err)
@@ -332,7 +332,7 @@ func TestBackfillAdoptsATableThatAlreadyHasRows(t *testing.T) {
 		t.Errorf("the default tenant sees %d of its adopted rows, want 2", n)
 	}
 	// And to nobody else.
-	if err := Scoped(With(ctx, "other"), db, func(tx *gorm.DB) error {
+	if err := Scoped(WithTenant(ctx, "other"), db, func(tx *gorm.DB) error {
 		return tx.Table(scopedTable).Count(&n).Error
 	}); err != nil {
 		t.Fatal(err)

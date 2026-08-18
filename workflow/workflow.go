@@ -12,18 +12,17 @@
 //     Status, and a typed handler are all an ordinary service needs.
 //   - Authoring a workflow does not. Engines differ in determinism rules, replay,
 //     history limits, versioning, signals and child workflows, so that surface
-//     lives in the engine subpackage (platform/sdk/workflow/temporal) which you
+//     lives in the engine subpackage (go.neokarl.com/sdk/workflow/temporal) which you
 //     import on purpose. It is a one-way door: a workflow authored there has an
 //     engine-shaped history forever.
 //
-// For events emitted *by* a job — progress, lifecycle — see platform/sdk/events.
+// For events emitted *by* a job — progress, lifecycle — see go.neokarl.com/sdk/events.
 // This package publishes nothing itself; only the service knows what its statuses
 // mean.
 package workflow
 
 import (
 	"context"
-	"errors"
 	"time"
 )
 
@@ -31,10 +30,16 @@ import (
 type Status string
 
 const (
-	StatusUnknown   Status = "unknown"
-	StatusRunning   Status = "running"
+	// StatusUnknown means the engine has no record of the job — it was never
+	// submitted, or its history has been purged.
+	StatusUnknown Status = "unknown"
+	// StatusRunning means the job is in flight, including waiting to be retried.
+	StatusRunning Status = "running"
+	// StatusSucceeded means the handler returned nil.
 	StatusSucceeded Status = "succeeded"
-	StatusFailed    Status = "failed"
+	// StatusFailed means the handler exhausted its retries.
+	StatusFailed Status = "failed"
+	// StatusCancelled means the job was cancelled before finishing.
 	StatusCancelled Status = "cancelled"
 )
 
@@ -42,9 +47,6 @@ const (
 func (s Status) Terminal() bool {
 	return s == StatusSucceeded || s == StatusFailed || s == StatusCancelled
 }
-
-// ErrNoHandler means a job named a handler this process never registered.
-var ErrNoHandler = errors.New("workflow: no handler registered for job")
 
 // Job is one unit of durable work.
 //

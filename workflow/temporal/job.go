@@ -20,7 +20,7 @@ import (
 	"go.temporal.io/sdk/worker"
 	temporalwf "go.temporal.io/sdk/workflow"
 
-	"platform/sdk/workflow"
+	"go.neokarl.com/sdk/workflow"
 )
 
 // slack is added to a job's own timeout before the engine gives up on the
@@ -114,7 +114,7 @@ func (e *Engine) Submit(ctx context.Context, j workflow.Job) error {
 		queue = e.defaultQueue()
 	}
 	if queue == "" {
-		return fmt.Errorf("temporal: job %q has no queue and no default is configured", j.ID)
+		return fmt.Errorf("%w: job %q names no queue and no default is configured", ErrNoQueue, j.ID)
 	}
 	_, err := e.client.ExecuteWorkflow(ctx,
 		client.StartWorkflowOptions{ID: j.ID, TaskQueue: queue},
@@ -201,5 +201,6 @@ func withBeater(fn any) any {
 	}).Interface()
 }
 
-// ErrNoQueue means a job named a queue this process does not serve.
-var ErrNoQueue = errors.New("temporal: queue not served by this process")
+// ErrNoQueue means a job could not be routed: it named no queue and the engine
+// has no default. Test for it with errors.Is.
+var ErrNoQueue = errors.New("temporal: job has no queue")

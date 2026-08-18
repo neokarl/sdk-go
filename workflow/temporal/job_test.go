@@ -9,43 +9,43 @@ import (
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
 
-	"platform/sdk/workflow"
+	"go.neokarl.com/sdk/workflow"
 )
 
-type scanJob struct {
-	ScanID string
-	Tool   string
+type importJob struct {
+	JobID string
+	Tool  string
 }
 
 // The job workflow's contract: run the handler, and if it ends badly leave a
 // terminal record behind. Everything below is one of those two halves.
 func TestJobWorkflow(t *testing.T) {
-	const handler = "webtools.RunTool"
+	const handler = "inventory.ImportItems"
 	failure := workflow.FailureName(handler)
 
 	t.Run("success runs the handler and no failure path", func(t *testing.T) {
 		var suite testsuite.WorkflowTestSuite
 		env := suite.NewTestWorkflowEnvironment()
 
-		var got scanJob
+		var got importJob
 		env.RegisterActivityWithOptions(
-			func(_ context.Context, j scanJob) error { got = j; return nil },
+			func(_ context.Context, j importJob) error { got = j; return nil },
 			activity.RegisterOptions{Name: handler},
 		)
 		var failed bool
 		env.RegisterActivityWithOptions(
-			func(context.Context, scanJob, string) error { failed = true; return nil },
+			func(context.Context, importJob, string) error { failed = true; return nil },
 			activity.RegisterOptions{Name: failure},
 		)
 
 		env.ExecuteWorkflow(jobWorkflow, inputFor(workflow.Job{
-			ID: "scan-1", Handler: handler, Payload: scanJob{ScanID: "s1", Tool: "httpx"},
+			ID: "import-1", Handler: handler, Payload: importJob{JobID: "j1", Tool: "csv"},
 		}))
 
 		if err := env.GetWorkflowError(); err != nil {
 			t.Fatalf("workflow error: %v", err)
 		}
-		if got.ScanID != "s1" || got.Tool != "httpx" {
+		if got.JobID != "j1" || got.Tool != "csv" {
 			t.Errorf("payload did not arrive typed: %+v", got)
 		}
 		if failed {
@@ -60,18 +60,18 @@ func TestJobWorkflow(t *testing.T) {
 		env := suite.NewTestWorkflowEnvironment()
 
 		env.RegisterActivityWithOptions(
-			func(context.Context, scanJob) error { return errors.New("tool exploded") },
+			func(context.Context, importJob) error { return errors.New("tool exploded") },
 			activity.RegisterOptions{Name: handler},
 		)
 		var reason string
 		var attempts int
 		env.RegisterActivityWithOptions(
-			func(_ context.Context, _ scanJob, r string) error { attempts++; reason = r; return nil },
+			func(_ context.Context, _ importJob, r string) error { attempts++; reason = r; return nil },
 			activity.RegisterOptions{Name: failure},
 		)
 
 		env.ExecuteWorkflow(jobWorkflow, inputFor(workflow.Job{
-			ID: "scan-2", Handler: handler, Payload: scanJob{ScanID: "s2"},
+			ID: "import-2", Handler: handler, Payload: importJob{JobID: "j2"},
 			Retry: workflow.RetryQuick,
 		}))
 
@@ -102,17 +102,17 @@ func TestJobWorkflow(t *testing.T) {
 // wrapper must be indistinguishable from what the service wrote — and it must
 // still deliver the payload.
 func TestWithBeaterPreservesTheHandler(t *testing.T) {
-	var seen scanJob
-	original := func(_ context.Context, j scanJob) error { seen = j; return nil }
+	var seen importJob
+	original := func(_ context.Context, j importJob) error { seen = j; return nil }
 
-	wrapped, ok := withBeater(original).(func(context.Context, scanJob) error)
+	wrapped, ok := withBeater(original).(func(context.Context, importJob) error)
 	if !ok {
 		t.Fatalf("wrapping changed the signature: %T", withBeater(original))
 	}
-	if err := wrapped(context.Background(), scanJob{ScanID: "s3", Tool: "nuclei"}); err != nil {
+	if err := wrapped(context.Background(), importJob{JobID: "s3", Tool: "nuclei"}); err != nil {
 		t.Fatalf("wrapped handler: %v", err)
 	}
-	if seen.ScanID != "s3" || seen.Tool != "nuclei" {
+	if seen.JobID != "s3" || seen.Tool != "nuclei" {
 		t.Errorf("payload did not survive the wrapper: %+v", seen)
 	}
 }
@@ -124,16 +124,16 @@ func TestRegisteredHandlerRunsAsAnActivity(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestActivityEnvironment()
 
-	var seen scanJob
+	var seen importJob
 	env.RegisterActivityWithOptions(
-		withBeater(func(_ context.Context, j scanJob) error { seen = j; return nil }),
-		activity.RegisterOptions{Name: "webtools.RunTool"},
+		withBeater(func(_ context.Context, j importJob) error { seen = j; return nil }),
+		activity.RegisterOptions{Name: "inventory.ImportItems"},
 	)
 
-	if _, err := env.ExecuteActivity("webtools.RunTool", scanJob{ScanID: "s4", Tool: "katana"}); err != nil {
+	if _, err := env.ExecuteActivity("inventory.ImportItems", importJob{JobID: "j4", Tool: "json"}); err != nil {
 		t.Fatalf("activity: %v", err)
 	}
-	if seen.ScanID != "s4" || seen.Tool != "katana" {
+	if seen.JobID != "j4" || seen.Tool != "json" {
 		t.Errorf("payload did not arrive: %+v", seen)
 	}
 }

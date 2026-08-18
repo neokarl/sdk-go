@@ -15,8 +15,8 @@
 // same assumption row security was adopted to remove.
 //
 // One thing is deliberately NOT here: deciding *which* tenant. That is identity,
-// and it belongs to platform/sdk/auth (Verifier.TenantOf), which resolves it from a
-// verified token and binds it with With.
+// and it belongs to go.neokarl.com/sdk/auth (Verifier.TenantOf), which resolves it from a
+// verified token, and which the SDK's authentication middleware binds with WithTenant.
 //
 // Note the neighbour: middleware.TenantIDFrom reads the X-Tenant-ID *header*, which
 // a caller supplies and can therefore choose. It is a development convenience. This
@@ -42,7 +42,7 @@ const Column = "tenant_id"
 // Unrestricted is the session value that sees every tenant's rows.
 //
 // It exists for work that is genuinely cross-tenant and has no request behind it:
-// marking scans interrupted after a restart, a retention sweep, a migration. Such
+// marking jobs interrupted after a restart, a retention sweep, a migration. Such
 // a job cannot ask "which tenant?" because the answer is "all of them", and with
 // no setting at all it would quietly affect nothing — the failure mode being a
 // maintenance task that appears to run and does nothing.
@@ -74,7 +74,11 @@ type Owned struct {
 	TenantID string `gorm:"column:tenant_id;type:text;not null;index" json:"-"`
 }
 
-func (o Owned) Tenant() string       { return o.TenantID }
+// Tenant returns the tenant this row belongs to, satisfying [Model].
+func (o Owned) Tenant() string { return o.TenantID }
+
+// SetTenant assigns the row's tenant, satisfying [Model]. The GORM plugin calls
+// it on insert with the tenant from the context; you do not call it yourself.
 func (o *Owned) SetTenant(id string) { o.TenantID = id }
 
 // Model is what a tenant-owned model satisfies. Detection goes through this
@@ -90,16 +94,23 @@ type Model interface {
 
 type ctxKey struct{}
 
-// With carries a tenant on a context for work that has no request behind it —
-// a queue worker, a scheduled job, a workflow activity. Such a caller cannot read
-// its own row to discover the tenant, because reading requires the tenant first,
-// so it must be told: carry it in the job payload and set it here.
-func With(ctx context.Context, tenant string) context.Context {
+// WithTenant carries a tenant on a context for work that has no request behind
+// it — a queue worker, a scheduled job, a workflow activity. Such a caller
+// cannot read its own row to discover the tenant, because reading requires the
+// tenant first, so it must be told: carry it in the job payload and set it here.
+//
+// For work that does have a request behind it, the SDK's authentication
+// middleware sets this from the caller's verified token; you do not call it.
+func WithTenant(ctx context.Context, tenant string) context.Context {
 	return context.WithValue(ctx, ctxKey{}, tenant)
 }
 
-// From returns the tenant carried by ctx.
-func From(ctx context.Context) (string, bool) {
+// TenantFrom returns the tenant carried by ctx, and whether one is set.
+//
+// This is the enforced tenant — the value [Scoped] hands the database. It is
+// not middleware.TenantIDFrom, which reads the X-Tenant-ID header a caller
+// supplies and can therefore choose.
+func TenantFrom(ctx context.Context) (string, bool) {
 	t, ok := ctx.Value(ctxKey{}).(string)
 	return t, ok && t != ""
 }

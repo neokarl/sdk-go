@@ -6,7 +6,7 @@ import (
 	"go.temporal.io/api/enums/v1"
 	temporalwf "go.temporal.io/sdk/workflow"
 
-	"platform/sdk/workflow"
+	"go.neokarl.com/sdk/workflow"
 )
 
 // RunChild runs a Job as a child of a hand-written workflow, and blocks until it

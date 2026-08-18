@@ -45,16 +45,16 @@ func liveForTest(t *testing.T) Live[tick] {
 func TestLiveBroadcastsToEverySubscriber(t *testing.T) {
 	live := liveForTest(t)
 
-	a, stopA := live.Subscribe("scan-1")
+	a, stopA := live.Subscribe("import-1")
 	defer stopA()
-	b, stopB := live.Subscribe("scan-1")
+	b, stopB := live.Subscribe("import-1")
 	defer stopB()
-	other, stopOther := live.Subscribe("scan-2")
+	other, stopOther := live.Subscribe("import-2")
 	defer stopOther()
 
 	// Redis subscriptions are established asynchronously.
 	time.Sleep(150 * time.Millisecond)
-	live.Publish("scan-1", tick{Found: 7})
+	live.Publish("import-1", tick{Found: 7})
 
 	for name, ch := range map[string]<-chan tick{"a": a, "b": b} {
 		select {
@@ -78,7 +78,7 @@ func TestLiveBroadcastsToEverySubscriber(t *testing.T) {
 // goroutine parked on a receive.
 func TestLiveUnsubscribeClosesTheChannel(t *testing.T) {
 	live := liveForTest(t)
-	ch, stop := live.Subscribe("scan-3")
+	ch, stop := live.Subscribe("import-3")
 	time.Sleep(100 * time.Millisecond)
 	stop()
 	stop() // must be safe twice: handlers defer it and may also call it
@@ -94,10 +94,10 @@ func TestLiveUnsubscribeClosesTheChannel(t *testing.T) {
 }
 
 // A reader that stops reading must not be able to stall the work producing the
-// events — losing progress ticks is cheap, blocking a scan is not.
+// events — losing progress ticks is cheap, blocking the job producing them is not.
 func TestLiveDropsForASlowSubscriber(t *testing.T) {
 	live := liveForTest(t)
-	_, stop := live.Subscribe("scan-4")
+	_, stop := live.Subscribe("import-4")
 	defer stop()
 	time.Sleep(100 * time.Millisecond)
 
@@ -105,7 +105,7 @@ func TestLiveDropsForASlowSubscriber(t *testing.T) {
 	go func() {
 		defer close(done)
 		for i := 0; i < 200; i++ { // far beyond the 32-deep buffer
-			live.Publish("scan-4", tick{Found: i})
+			live.Publish("import-4", tick{Found: i})
 		}
 	}()
 

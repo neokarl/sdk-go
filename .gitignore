@@ -1,0 +1,19 @@
+# Local PKI material. Never commit private keys.
+certs/
+*.pem
+*.key
+*.crt
+
+# Build output
+/bin/
+/dist/
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/

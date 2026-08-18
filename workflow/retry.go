@@ -16,7 +16,7 @@ const (
 	// RetryQuick suits short, cheap, idempotent steps — a status write, a
 	// record update. The zero value means this.
 	RetryQuick RetryPreset = "quick"
-	// RetryExpensive suits work a retry re-runs from the beginning: a scan, a
+	// RetryExpensive suits work a retry re-runs from the beginning: a bulk import, a
 	// crawl, anything measured in minutes. Few attempts, generous backoff.
 	RetryExpensive RetryPreset = "expensive"
 	// RetryForever suits polling something that will eventually answer, where

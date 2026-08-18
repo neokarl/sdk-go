@@ -3,7 +3,7 @@ package service
 import (
 	"net/http"
 
-	"platform/sdk/contracts"
+	"go.neokarl.com/sdk/contracts"
 )
 
 // Response helpers: write the platform's canonical `{ success, data, error }`

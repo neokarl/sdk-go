@@ -4,7 +4,7 @@ package contracts
 
 // Envelope is the canonical response shape for every API endpoint.
 //
-// See BACKEND.md "API Standards":
+// The platform API standard:
 //
 //	{ "success": true, "data": ..., "error": null }
 type Envelope struct {

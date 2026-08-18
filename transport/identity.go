@@ -1,3 +1,14 @@
+// Package transport propagates the caller's identity across service-to-service
+// gRPC calls, so a downstream service knows who originated a request rather
+// than seeing it arrive anonymous.
+//
+// You rarely call this package directly: service.NewGRPCServer installs the
+// server interceptors and client.New installs the client ones. What you do use
+// is [IdentityFrom], to read the propagated caller inside a gRPC handler.
+//
+// The propagated identity is *asserted*, not verified — it is metadata the
+// calling service set. Verify the bearer token (see the auth package) before
+// making an authorization decision on it.
 package transport
 
 import "context"

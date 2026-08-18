@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"platform/sdk/contracts"
-	platerr "platform/sdk/errors"
-	"platform/sdk/logger"
+	"go.neokarl.com/sdk/contracts"
+	platerr "go.neokarl.com/sdk/errors"
+	"go.neokarl.com/sdk/observability"
 )
 
 // ErrorHandler is Echo's central HTTPErrorHandler. It turns every error into
@@ -24,7 +24,7 @@ func ErrorHandler() echo.HTTPErrorHandler {
 
 		// PlatformError — render exactly as declared.
 		if pe, ok := platerr.As(err); ok {
-			logger.From(ctx).LogAttrs(ctx, levelFor(pe.Status), "handler_error",
+			observability.LoggerFrom(ctx).LogAttrs(ctx, levelFor(pe.Status), "handler_error",
 				slog.String("code", string(pe.Code)),
 				slog.Int("status", pe.Status),
 				slog.String("message", pe.Message),
@@ -41,14 +41,14 @@ func ErrorHandler() echo.HTTPErrorHandler {
 			if m, ok := he.Message.(string); ok && m != "" {
 				msg = m
 			}
-			logger.From(ctx).LogAttrs(ctx, levelFor(he.Code), "echo_error",
+			observability.LoggerFrom(ctx).LogAttrs(ctx, levelFor(he.Code), "echo_error",
 				slog.Int("status", he.Code), slog.String("message", msg))
 			_ = c.JSON(he.Code, contracts.Fail(codeFor(he.Code), msg, nil))
 			return
 		}
 
 		// Unclassified — log full error, return 500 with generic message.
-		logger.From(ctx).LogAttrs(ctx, slog.LevelError, "unhandled_error",
+		observability.LoggerFrom(ctx).LogAttrs(ctx, slog.LevelError, "unhandled_error",
 			slog.String("error", err.Error()))
 		_ = c.JSON(http.StatusInternalServerError,
 			contracts.Fail(string(platerr.CodeInternal), "internal server error", nil))

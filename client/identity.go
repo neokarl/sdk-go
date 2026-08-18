@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	mw "platform/sdk/middleware"
-	"platform/sdk/transport"
+	mw "go.neokarl.com/sdk/middleware"
+	"go.neokarl.com/sdk/transport"
 )
 
 // HeaderUserID carries the calling subject across a REST hop. The tenant and
-// request-id headers already have constants in platform/sdk/middleware; this one
+// request-id headers already have constants in go.neokarl.com/sdk/middleware; this one
 // completes the set, matching the gRPC metadata key transport uses.
 const HeaderUserID = "X-User-ID"
 

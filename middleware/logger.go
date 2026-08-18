@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"platform/sdk/logger"
+	"go.neokarl.com/sdk/observability"
 )
 
 // Logger attaches a request-scoped slog to context (with request_id /
@@ -25,7 +25,7 @@ func Logger(base *slog.Logger) echo.MiddlewareFunc {
 				slog.String("method", req.Method),
 				slog.String("path", req.URL.Path),
 			)
-			c.SetRequest(req.WithContext(logger.With(req.Context(), l)))
+			c.SetRequest(req.WithContext(observability.WithLogger(req.Context(), l)))
 
 			err := next(c)
 

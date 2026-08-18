@@ -11,7 +11,7 @@ import (
 )
 
 // DefaultKeepAlive is how often an idle stream sends a comment line. Proxies and
-// load balancers close connections that go quiet, and a scan can legitimately
+// load balancers close connections that go quiet, and a long import can legitimately
 // produce nothing for minutes.
 const DefaultKeepAlive = 25 * time.Second
 
@@ -55,7 +55,7 @@ func (s SSE[T]) Serve(ctx context.Context, w http.ResponseWriter, events <-chan 
 	h.Set("Cache-Control", "no-cache")
 	h.Set("Connection", "keep-alive")
 	// Nginx buffers proxied responses by default, which holds events until the
-	// buffer fills — indistinguishable from a stalled scan.
+	// buffer fills — indistinguishable from a stalled job.
 	h.Set("X-Accel-Buffering", "no")
 	w.WriteHeader(http.StatusOK)
 

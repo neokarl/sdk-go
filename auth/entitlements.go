@@ -3,7 +3,7 @@
 //
 // A plugin cannot answer that from the access token alone. The token carries
 // realm ROLES; the platform's permission vocabulary is Authorization Services
-// SCOPES (e.g. "webtools.read"), and the mapping from one to the other lives in
+// SCOPES (e.g. "inventory.read"), and the mapping from one to the other lives in
 // Keycloak. Resolving it means asking Keycloak, which is what this does.
 
 package auth
@@ -152,7 +152,7 @@ func (v *Verifier) Entitlements(ctx context.Context, rawToken string) ([]string,
 // It satisfies the authorizer interface the service package's route options
 // expect, so a plugin wires the verifier once and declares scopes per route.
 func (v *Verifier) Allowed(ctx context.Context, scope string) (bool, error) {
-	id, ok := FromContext(ctx)
+	id, ok := IdentityFrom(ctx)
 	if !ok || id.Token == "" {
 		return false, nil // unauthenticated: not an error, just not allowed
 	}

@@ -14,7 +14,8 @@ import (
 
 // --- server side ---------------------------------------------------------
 
-// serverUnary chains recovery → identity-extract → logging for unary calls.
+// ServerUnary chains recovery → identity-extract → logging for unary calls.
+// service.NewGRPCServer installs it; you do not normally call it yourself.
 func ServerUnary(log *slog.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		start := time.Now()
@@ -34,7 +35,7 @@ func ServerUnary(log *slog.Logger) grpc.UnaryServerInterceptor {
 	}
 }
 
-// serverStream mirrors serverUnary for streaming calls.
+// ServerStream mirrors [ServerUnary] for streaming calls.
 func ServerStream(log *slog.Logger) grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		start := time.Now()
@@ -86,13 +87,15 @@ func first(md metadata.MD, key string) string {
 
 // --- client side ---------------------------------------------------------
 
-// clientUnary injects the context identity into outgoing metadata.
+// ClientUnary injects the context identity into outgoing call metadata, so
+// the callee can attribute the call. client.New installs it.
 func ClientUnary() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		return invoker(injectIdentity(ctx), method, req, reply, cc, opts...)
 	}
 }
 
+// ClientStream mirrors [ClientUnary] for streaming calls.
 func ClientStream() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		return streamer(injectIdentity(ctx), desc, cc, method, opts...)

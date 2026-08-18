@@ -11,16 +11,16 @@ import (
 )
 
 func TestContextCarriesTheTenant(t *testing.T) {
-	if _, ok := From(context.Background()); ok {
+	if _, ok := TenantFrom(context.Background()); ok {
 		t.Error("a bare context must not appear to carry a tenant")
 	}
-	ctx := With(context.Background(), "acme")
-	if got, ok := From(ctx); !ok || got != "acme" {
+	ctx := WithTenant(context.Background(), "acme")
+	if got, ok := TenantFrom(ctx); !ok || got != "acme" {
 		t.Errorf("From = %q, %v", got, ok)
 	}
 	// An empty tenant is not a tenant: it must not read as "scoped to nothing",
 	// which would look identical to a correctly scoped call.
-	if _, ok := From(With(context.Background(), "")); ok {
+	if _, ok := TenantFrom(WithTenant(context.Background(), "")); ok {
 		t.Error("an empty tenant must not count as carried")
 	}
 }

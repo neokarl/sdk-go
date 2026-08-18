@@ -26,7 +26,7 @@ import (
 // Event is the wire envelope for every published event.
 type Event struct {
 	ID        string         `json:"id"`
-	Name      string         `json:"name"` // dot-namespaced, e.g. "engagement.created"
+	Name      string         `json:"name"` // dot-namespaced, e.g. "order.created"
 	Source    string         `json:"source"`
 	TenantID  string         `json:"tenantId,omitempty"`
 	Timestamp time.Time      `json:"timestamp"`

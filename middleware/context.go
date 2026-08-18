@@ -1,5 +1,5 @@
 // Package middleware bundles the Echo middleware stack used by the API server.
-// The stack is "middleware-first" per BACKEND.md: handlers stay thin and
+// The stack is "middleware-first": handlers stay thin and
 // cross-cutting concerns (request id, logger, tenant, auth, audit, error
 // handling) live here.
 package middleware

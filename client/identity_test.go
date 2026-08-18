@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	mw "platform/sdk/middleware"
-	"platform/sdk/transport"
+	mw "go.neokarl.com/sdk/middleware"
+	"go.neokarl.com/sdk/transport"
 )
 
 // A service-to-service call must carry the caller. Without this, a downstream
