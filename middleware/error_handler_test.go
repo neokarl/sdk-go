@@ -10,7 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	platerr "go.neokarl.com/sdk/errors"
+	platerr "github.com/neokarl/sdk-go/errors"
 )
 
 // serve runs one request through an echo instance whose error handler is the

@@ -9,7 +9,7 @@ import (
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
 
-	"go.neokarl.com/sdk/workflow"
+	"github.com/neokarl/sdk-go/workflow"
 )
 
 type importJob struct {

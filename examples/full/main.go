@@ -22,13 +22,13 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"go.neokarl.com/sdk/auth"
-	"go.neokarl.com/sdk/client"
-	"go.neokarl.com/sdk/contracts"
-	"go.neokarl.com/sdk/events"
-	"go.neokarl.com/sdk/observability"
-	"go.neokarl.com/sdk/service"
-	"go.neokarl.com/sdk/tenancy"
+	"github.com/neokarl/sdk-go/auth"
+	"github.com/neokarl/sdk-go/client"
+	"github.com/neokarl/sdk-go/contracts"
+	"github.com/neokarl/sdk-go/events"
+	"github.com/neokarl/sdk-go/observability"
+	"github.com/neokarl/sdk-go/service"
+	"github.com/neokarl/sdk-go/tenancy"
 )
 
 // Item is tenant-owned: embedding tenancy.Owned brings the tenant_id column,

@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"go.neokarl.com/sdk/contracts"
+	"github.com/neokarl/sdk-go/contracts"
 )
 
 // templatePath is what keeps a route's echo form and its advertised form in

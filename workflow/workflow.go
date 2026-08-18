@@ -12,11 +12,11 @@
 //     Status, and a typed handler are all an ordinary service needs.
 //   - Authoring a workflow does not. Engines differ in determinism rules, replay,
 //     history limits, versioning, signals and child workflows, so that surface
-//     lives in the engine subpackage (go.neokarl.com/sdk/workflow/temporal) which you
+//     lives in the engine subpackage (github.com/neokarl/sdk-go/workflow/temporal) which you
 //     import on purpose. It is a one-way door: a workflow authored there has an
 //     engine-shaped history forever.
 //
-// For events emitted *by* a job — progress, lifecycle — see go.neokarl.com/sdk/events.
+// For events emitted *by* a job — progress, lifecycle — see github.com/neokarl/sdk-go/events.
 // This package publishes nothing itself; only the service knows what its statuses
 // mean.
 package workflow

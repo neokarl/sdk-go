@@ -13,7 +13,7 @@ var loggerKey loggerKeyType
 // NewLogger builds the default platform logger: JSON to stdout, tagged with the
 // service, version and environment so every line is attributable.
 //
-// Pass the result to [go.neokarl.com/sdk/service.WithLogger]. Handlers should
+// Pass the result to [github.com/neokarl/sdk-go/service.WithLogger]. Handlers should
 // prefer [LoggerFrom], which picks up the per-request logger the SDK's HTTP
 // middleware installs (already carrying the request id).
 func NewLogger(service, version, env string) *slog.Logger {

@@ -15,7 +15,7 @@
 // same assumption row security was adopted to remove.
 //
 // One thing is deliberately NOT here: deciding *which* tenant. That is identity,
-// and it belongs to go.neokarl.com/sdk/auth (Verifier.TenantOf), which resolves it from a
+// and it belongs to github.com/neokarl/sdk-go/auth (Verifier.TenantOf), which resolves it from a
 // verified token, and which the SDK's authentication middleware binds with WithTenant.
 //
 // Note the neighbour: middleware.TenantIDFrom reads the X-Tenant-ID *header*, which

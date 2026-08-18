@@ -24,7 +24,7 @@ import (
 )
 
 // modulePath is this module. Import paths in the output are built from it.
-const modulePath = "go.neokarl.com/sdk"
+const modulePath = "github.com/neokarl/sdk-go"
 
 // API is the whole document.
 type API struct {

@@ -1,8 +1,8 @@
-// Package temporal runs go.neokarl.com/sdk/workflow jobs on Temporal.
+// Package temporal runs github.com/neokarl/sdk-go/workflow jobs on Temporal.
 //
 // Import it in one place — the composition root — to construct the engine, and
 // again wherever you author a workflow by hand. Everywhere else, code against
-// go.neokarl.com/sdk/workflow and stay engine-neutral.
+// github.com/neokarl/sdk-go/workflow and stay engine-neutral.
 //
 // The escape hatches (Client, Worker, Dial) return upstream Temporal types
 // deliberately: anything the Temporal Go SDK can do is still available, and the
@@ -29,7 +29,7 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 
-	"go.neokarl.com/sdk/workflow"
+	"github.com/neokarl/sdk-go/workflow"
 )
 
 // Config describes the connection and this process's worker role.

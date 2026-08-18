@@ -25,8 +25,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.opentelemetry.io/otel/trace"
 
-	"go.neokarl.com/sdk/contracts"
-	mw "go.neokarl.com/sdk/middleware"
+	"github.com/neokarl/sdk-go/contracts"
+	mw "github.com/neokarl/sdk-go/middleware"
 )
 
 // Manifest is the service manifest a plugin declares. Re-exported so plugins

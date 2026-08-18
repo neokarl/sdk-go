@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"go.neokarl.com/sdk/tenancy"
+	"github.com/neokarl/sdk-go/tenancy"
 )
 
 // ErrNoTenant means the caller's tenant could not be established. Treat it as a

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"go.neokarl.com/sdk/observability"
+	"github.com/neokarl/sdk-go/observability"
 )
 
 // Logger attaches a request-scoped slog to context (with request_id /

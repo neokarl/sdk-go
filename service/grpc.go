@@ -17,8 +17,8 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
-	"go.neokarl.com/sdk/internal/mtls"
-	"go.neokarl.com/sdk/transport"
+	"github.com/neokarl/sdk-go/internal/mtls"
+	"github.com/neokarl/sdk-go/transport"
 )
 
 // GRPCServer wraps a *grpc.Server pre-wired with the platform interceptor chain,

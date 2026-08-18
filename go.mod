@@ -1,4 +1,4 @@
-module go.neokarl.com/sdk
+module github.com/neokarl/sdk-go
 
 go 1.25.4
 

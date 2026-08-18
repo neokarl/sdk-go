@@ -17,8 +17,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go.neokarl.com/sdk/contracts"
-	"go.neokarl.com/sdk/service"
+	"github.com/neokarl/sdk-go/contracts"
+	"github.com/neokarl/sdk-go/service"
 )
 
 // Item is what this service serves. In a real service it would come from a

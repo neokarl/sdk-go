@@ -2,7 +2,7 @@
 //
 // This package deliberately knows nothing about Keycloak, tokens or roles. It
 // takes an Authenticator and an Authorizer and asks them questions;
-// go.neokarl.com/sdk/auth supplies an implementation of both, backed by the
+// github.com/neokarl/sdk-go/auth supplies an implementation of both, backed by the
 // platform's OIDC issuer and permission model.
 
 package service
@@ -14,7 +14,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"go.neokarl.com/sdk/errors"
+	"github.com/neokarl/sdk-go/errors"
 )
 
 // Authenticator establishes who is calling. It reads whatever credential the

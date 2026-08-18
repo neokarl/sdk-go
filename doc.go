@@ -38,12 +38,12 @@
 //	}
 //
 // Each package's own documentation covers its concern in full. Start with
-// [go.neokarl.com/sdk/service].
+// [github.com/neokarl/sdk-go/service].
 //
 // # Versioning
 //
 // [Version] is the version of this module. It is deliberately distinct from
-// [go.neokarl.com/sdk/contracts.Version], which is the version of the platform
+// [github.com/neokarl/sdk-go/contracts.Version], which is the version of the platform
 // *contract* — the manifest shape and the rules a service must satisfy. A
 // service declares which contract it targets via its manifest's
 // PlatformVersion; the SDK version is just which release of this code you build

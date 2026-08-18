@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"go.neokarl.com/sdk/contracts"
-	"go.neokarl.com/sdk/errors"
-	"go.neokarl.com/sdk/observability"
+	"github.com/neokarl/sdk-go/contracts"
+	"github.com/neokarl/sdk-go/errors"
+	"github.com/neokarl/sdk-go/observability"
 )
 
 // Recover catches panics, logs them with a stack trace, and returns the

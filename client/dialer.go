@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.neokarl.com/sdk/internal/mtls"
-	"go.neokarl.com/sdk/transport"
+	"github.com/neokarl/sdk-go/internal/mtls"
+	"github.com/neokarl/sdk-go/transport"
 )
 
 // MTLS builds mutual-TLS credentials for dialling peer services: this client

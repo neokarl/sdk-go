@@ -1,13 +1,13 @@
 package service
 
-import platerr "go.neokarl.com/sdk/errors"
+import platerr "github.com/neokarl/sdk-go/errors"
 
 // Error helpers: return one of these from a handler and the SDK renders the
 // platform's standard error envelope with the matching HTTP status.
 //
 // They cover the full set of platform error codes, so a handler never has to
 // import the errors package for the ordinary cases. Reach for
-// go.neokarl.com/sdk/errors directly when you want to attach a cause with Wrap
+// github.com/neokarl/sdk-go/errors directly when you want to attach a cause with Wrap
 // or extra fields with WithDetail.
 
 // BadRequest is a 400 — the request was malformed or failed validation.

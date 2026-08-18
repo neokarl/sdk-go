@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.neokarl.com/sdk/contracts"
+	"github.com/neokarl/sdk-go/contracts"
 )
 
 type stubAuthorizer struct {

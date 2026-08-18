@@ -4,7 +4,8 @@ certs/
 *.key
 *.crt
 
-# Build output
+# Build output. `go build ./cmd/...` drops binaries in the module root.
+/apidoc
 /bin/
 /dist/
 

@@ -20,7 +20,7 @@ import (
 	"go.temporal.io/sdk/worker"
 	temporalwf "go.temporal.io/sdk/workflow"
 
-	"go.neokarl.com/sdk/workflow"
+	"github.com/neokarl/sdk-go/workflow"
 )
 
 // slack is added to a job's own timeout before the engine gives up on the

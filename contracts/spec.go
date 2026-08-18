@@ -1,7 +1,7 @@
 package contracts
 
 // Version is the semantic version of the platform framework contract — the
-// public `go.neokarl.com/sdk` surface that plugins build against. It is distinct from
+// public `github.com/neokarl/sdk-go` surface that plugins build against. It is distinct from
 // a service's own version and from the running platform binary version; it is
 // the version the generated framework docs describe.
 const Version = "0.1.0"

@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"go.neokarl.com/sdk/contracts"
-	platerr "go.neokarl.com/sdk/errors"
-	"go.neokarl.com/sdk/observability"
+	"github.com/neokarl/sdk-go/contracts"
+	platerr "github.com/neokarl/sdk-go/errors"
+	"github.com/neokarl/sdk-go/observability"
 )
 
 // ErrorHandler is Echo's central HTTPErrorHandler. It turns every error into

@@ -12,10 +12,10 @@ of it is breaking — there are no published versions to be compatible with.
 
 ### Changed
 
-- **Module path is now `go.neokarl.com/sdk`.** It was `platform/sdk`, a
+- **Module path is now `github.com/neokarl/sdk-go`.** It was `platform/sdk`, a
   dot-less path the Go module proxy cannot resolve, which meant every consumer
   needed a filesystem `replace` directive. Imports become
-  `go.neokarl.com/sdk/service` and so on.
+  `github.com/neokarl/sdk-go/service` and so on.
 - **Minimum Go version is 1.25.4**, down from 1.26.2. This is the floor imposed
   by `go.temporal.io/sdk`; nothing in this module requires it directly.
 - `middleware` and `transport` moved under `internal/`. Every middleware and

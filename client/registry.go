@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"go.neokarl.com/sdk/contracts"
+	"github.com/neokarl/sdk-go/contracts"
 )
 
 // Registry resolves (serviceId, opId) into HTTP calls. Safe for

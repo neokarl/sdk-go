@@ -7,10 +7,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	platerr "go.neokarl.com/sdk/errors"
-	mw "go.neokarl.com/sdk/middleware"
-	"go.neokarl.com/sdk/tenancy"
-	"go.neokarl.com/sdk/transport"
+	platerr "github.com/neokarl/sdk-go/errors"
+	mw "github.com/neokarl/sdk-go/middleware"
+	"github.com/neokarl/sdk-go/tenancy"
+	"github.com/neokarl/sdk-go/transport"
 )
 
 // MiddlewareConfig tunes the echo authentication middleware.

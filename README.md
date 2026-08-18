@@ -5,7 +5,7 @@ it over REST and gRPC, authenticates its callers, keeps each tenant's data
 apart, and talks to its peers without hardcoding a single URL.
 
 ```bash
-go get go.neokarl.com/sdk
+go get github.com/neokarl/sdk-go
 ```
 
 Requires Go 1.25.4 or later.
@@ -22,8 +22,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go.neokarl.com/sdk/contracts"
-	"go.neokarl.com/sdk/service"
+	"github.com/neokarl/sdk-go/contracts"
+	"github.com/neokarl/sdk-go/service"
 )
 
 func main() {
@@ -121,7 +121,7 @@ item, err := client.InvokeData[Item](ctx, c, client.Call{
 ## Documentation
 
 - **Guides and tutorials** — https://go.neokarl.com/docs
-- **API reference** — https://pkg.go.dev/go.neokarl.com/sdk
+- **API reference** — https://pkg.go.dev/github.com/neokarl/sdk-go
 - **For LLM agents** — [`llms.txt`](https://go.neokarl.com/llms.txt), and
   `llms-full.txt` for the whole corpus in one file
 
